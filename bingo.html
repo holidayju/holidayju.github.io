@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bingo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+
+        h1 {
+            margin-top: 20px;
+            color: #333;
+        }
+
+        #bingo-board {
+            margin: 20px auto;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-gap: 10px;
+            width: 300px;
+        }
+
+        .cell {
+            width: 100%;
+            padding-bottom: 100%;
+            position: relative;
+            background: #fff;
+            border: 2px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+            cursor: pointer;
+        }
+
+        .cell.checked {
+            background-color: #4caf50;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>Bingo</h1>
+    <div id="bingo-board"></div>
+
+    <script>
+        const boardSize = 5;
+        const board = document.getElementById("bingo-board");
+
+        // Function to generate random numbers for the bingo board
+        function generateNumbers() {
+            const numbers = new Set();
+            while (numbers.size < boardSize * boardSize) {
+                numbers.add(Math.floor(Math.random() * 100) + 1);
+            }
+            return Array.from(numbers);
+        }
+
+        // Create Bingo board
+        function createBoard() {
+            const numbers = generateNumbers();
+            numbers.forEach((num, index) => {
+                const cell = document.createElement("div");
+                cell.classList.add("cell");
+                cell.textContent = num;
+
+                // Mark center cell as "FREE"
+                if (index === Math.floor(boardSize * boardSize / 2)) {
+                    cell.textContent = "FREE";
+                    cell.classList.add("checked");
+                }
+
+                cell.addEventListener("click", () => {
+                    cell.classList.toggle("checked");
+                });
+
+                board.appendChild(cell);
+            });
+        }
+
+        createBoard();
+    </script>
+</body>
+</html>
