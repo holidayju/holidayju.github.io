@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bingo</title>
+    <title>Bingo with OCR</title>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.1/dist/tesseract.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -48,45 +49,59 @@
     </style>
 </head>
 <body>
-    <h1>Bingo</h1>
+    <h1>Bingo with OCR</h1>
+    <input type="file" id="upload" accept="image/*" />
+    <p>上傳 Bingo 券圖片以自動填充表格</p>
     <div id="bingo-board"></div>
 
     <script>
         const boardSize = 5;
         const board = document.getElementById("bingo-board");
-
-        // Function to generate random numbers for the bingo board
-        function generateNumbers() {
-            const numbers = new Set();
-            while (numbers.size < boardSize * boardSize) {
-                numbers.add(Math.floor(Math.random() * 100) + 1);
-            }
-            return Array.from(numbers);
-        }
-
-        // Create Bingo board
-        function createBoard() {
-            const numbers = generateNumbers();
-            numbers.forEach((num, index) => {
+        
+        // 初始化空的 Bingo 表格
+        function initBoard() {
+            board.innerHTML = '';
+            for (let i = 0; i < boardSize * boardSize; i++) {
                 const cell = document.createElement("div");
                 cell.classList.add("cell");
-                cell.textContent = num;
-
-                // Mark center cell as "FREE"
-                if (index === Math.floor(boardSize * boardSize / 2)) {
-                    cell.textContent = "FREE";
-                    cell.classList.add("checked");
-                }
-
-                cell.addEventListener("click", () => {
-                    cell.classList.toggle("checked");
-                });
-
                 board.appendChild(cell);
+            }
+        }
+
+        // 填充 Bingo 表格
+        function fillBoard(numbers) {
+            const cells = document.querySelectorAll(".cell");
+            numbers.forEach((num, index) => {
+                if (index < cells.length) {
+                    cells[index].textContent = num;
+                }
             });
         }
 
-        createBoard();
+        // 處理圖片上傳並使用 OCR
+        document.getElementById("upload").addEventListener("change", (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function () {
+                Tesseract.recognize(reader.result, 'eng', {
+                    logger: (info) => console.log(info),
+                }).then(({ data: { text } }) => {
+                    // 假設圖片中的數字以空格或換行分隔，解析成陣列
+                    const numbers = text.match(/\d+/g).slice(0, boardSize * boardSize).map(Number);
+                    if (numbers.length === boardSize * boardSize) {
+                        fillBoard(numbers);
+                    } else {
+                        alert("無法辨識完整的 Bingo 券，請重新上傳清晰的圖片。");
+                    }
+                });
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // 初始化空白表格
+        initBoard();
     </script>
 </body>
 </html>
