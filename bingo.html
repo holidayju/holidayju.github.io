@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bingo with OCR</title>
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.1/dist/tesseract.min.js"></script>
+    <title>Bingo</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -19,8 +18,15 @@
             color: #333;
         }
 
-        #bingo-board {
-            margin: 20px auto;
+        #bingo-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .bingo-board {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             grid-gap: 10px;
@@ -36,7 +42,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2em;
+            font-size: 1em;
             font-weight: bold;
             color: #333;
             cursor: pointer;
@@ -46,62 +52,90 @@
             background-color: #4caf50;
             color: white;
         }
+
+        #input-section {
+            margin: 20px auto;
+            text-align: center;
+        }
+
+        textarea {
+            width: 80%;
+            height: 100px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #333;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+        }
+
+        button:hover {
+            background-color: #555;
+        }
     </style>
 </head>
 <body>
-    <h1>Bingo with OCR</h1>
-    <input type="file" id="upload" accept="image/*" />
-    <p>上傳 Bingo 券圖片以自動填充表格</p>
-    <div id="bingo-board"></div>
+    <h1>Bingo</h1>
+    <div id="input-section">
+        <textarea id="bingo-input" placeholder="輸入 Bingo 券內容，每張券用換行分隔，每行 5 個數字，以空格分隔，例如：\n1 2 3 4 5\n6 7 8 9 10\n..."></textarea>
+        <br>
+        <button id="generate-button">生成 Bingo 券</button>
+    </div>
+    <div id="bingo-container"></div>
 
     <script>
-        const boardSize = 5;
-        const board = document.getElementById("bingo-board");
-        
-        // 初始化空的 Bingo 表格
-        function initBoard() {
-            board.innerHTML = '';
-            for (let i = 0; i < boardSize * boardSize; i++) {
+        const container = document.getElementById("bingo-container");
+        const input = document.getElementById("bingo-input");
+        const button = document.getElementById("generate-button");
+
+        // Function to create a Bingo board
+        function createBoard(numbers) {
+            const board = document.createElement("div");
+            board.classList.add("bingo-board");
+
+            numbers.forEach(num => {
                 const cell = document.createElement("div");
                 cell.classList.add("cell");
+                cell.textContent = num;
+                cell.addEventListener("click", () => {
+                    cell.classList.toggle("checked");
+                });
                 board.appendChild(cell);
-            }
+            });
+
+            container.appendChild(board);
         }
 
-        // 填充 Bingo 表格
-        function fillBoard(numbers) {
-            const cells = document.querySelectorAll(".cell");
-            numbers.forEach((num, index) => {
-                if (index < cells.length) {
-                    cells[index].textContent = num;
+        // Generate Bingo boards based on user input
+        button.addEventListener("click", () => {
+            container.innerHTML = ""; // Clear previous boards
+
+            const lines = input.value.trim().split("\n");
+            let currentBoard = [];
+
+            lines.forEach((line, index) => {
+                const numbers = line.trim().split(/\s+/).map(Number);
+
+                if (numbers.length === 5) {
+                    currentBoard.push(...numbers);
+
+                    if (currentBoard.length === 25) {
+                        createBoard(currentBoard);
+                        currentBoard = [];
+                    }
+                } else {
+                    alert(`第 ${index + 1} 行數字格式錯誤，請確保每行有 5 個數字。`);
                 }
             });
-        }
 
-        // 處理圖片上傳並使用 OCR
-        document.getElementById("upload").addEventListener("change", (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function () {
-                Tesseract.recognize(reader.result, 'eng', {
-                    logger: (info) => console.log(info),
-                }).then(({ data: { text } }) => {
-                    // 假設圖片中的數字以空格或換行分隔，解析成陣列
-                    const numbers = text.match(/\d+/g).slice(0, boardSize * boardSize).map(Number);
-                    if (numbers.length === boardSize * boardSize) {
-                        fillBoard(numbers);
-                    } else {
-                        alert("無法辨識完整的 Bingo 券，請重新上傳清晰的圖片。");
-                    }
-                });
-            };
-            reader.readAsDataURL(file);
+            if (currentBoard.length > 0) {
+                alert("輸入的數字不足以生成完整的 Bingo 券。請檢查您的輸入。");
+            }
         });
-
-        // 初始化空白表格
-        initBoard();
     </script>
 </body>
 </html>
